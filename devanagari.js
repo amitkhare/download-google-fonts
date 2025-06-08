@@ -1,18 +1,5 @@
-export default [{
-    family: 'Poppins',
-    category: 'sans-serif',
-    variants: ['0,100','1,100','0,200','1,200','0,300','1,300','0,400','1,400','0,500','1,500','0,600','1,600','0,700','1,700','0,800','1,800','0,900','1,900'],
-    subsets: ['devanagari', 'latin', 'latin-ext'],
-  },
-  {
-    family: 'Noto Sans Devanagari',
-    category: 'sans-serif',
-    variants: ['0,100','0,200','0,300','0,400','0,500','0,600','0,700','0,800','0,900'],
-    subsets: ['devanagari', 'latin', 'latin-ext'],
-  }
-]
 // Devanagari fonts (Hindi and other Indic languages)
-export const dd = [
+export default [
   // Devanagari fonts - Sans Serif
   {
     family: 'Noto Sans Devanagari',

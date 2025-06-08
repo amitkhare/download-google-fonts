@@ -12,22 +12,6 @@ export default [
     category: 'sans-serif',
     variants: ['0,200','0,300','0,400','0,500','0,600','0,700','0,800','0,900'],
     subsets: ['arabic', 'latin', 'latin-ext'],
-  }
-]
-// Arabic & Urdu fonts
-export const dd = [
-  // Arabic & Urdu Sans-Serif fonts
-  {
-    family: 'Noto Sans Arabic',
-    category: 'sans-serif',
-    variants: ['0,100','0,200','0,300','0,400','0,500','0,600','0,700','0,800','0,900'],
-    subsets: ['arabic', 'latin', 'latin-ext'],
-  },
-  {
-    family: 'Cairo',
-    category: 'sans-serif',
-    variants: ['0,200','0,300','0,400','0,500','0,600','0,700','0,800','0,900'],
-    subsets: ['arabic', 'latin', 'latin-ext'],
   },
   {
     family: 'Tajawal',

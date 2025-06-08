@@ -112,11 +112,13 @@ function getFormatFromUrl(url) {
 }
 
 /**
- * Create directory structure for fonts
+ * Create directory structure for fonts categorized by language
  * @param {string} fontFamily - Font family name
+ * @param {string} primaryLanguage - Primary language/subset for the font
  */
-async function ensureFontDirectory(fontFamily) {
-  const fontDir = path.join(FONTS_DIR, fontFamily.replace(/\s+/g, '-').toLowerCase())
+async function ensureFontDirectory(fontFamily, primaryLanguage = 'latin') {
+  const languageDir = path.join(FONTS_DIR, primaryLanguage)
+  const fontDir = path.join(languageDir, fontFamily.replace(/\s+/g, '-').toLowerCase())
   await fs.mkdir(fontDir, { recursive: true })
   return fontDir
 }
@@ -126,8 +128,9 @@ async function ensureFontDirectory(fontFamily) {
  * @param {Object} fontFace - Font face object with URL and metadata
  * @param {string} fontFamily - Font family name
  * @param {string} fontDir - Directory to save font
+ * @param {string} language - Primary language/subset for the font
  */
-async function downloadAndSaveFont(fontFace, fontFamily, fontDir) {
+async function downloadAndSaveFont(fontFace, fontFamily, fontDir, language = 'latin') {
   try {
     // Generate filename
     const weight = fontFace.fontweight || '400'
@@ -140,8 +143,7 @@ async function downloadAndSaveFont(fontFace, fontFamily, fontDir) {
     // Check if file exists
     try {
       await fs.access(filepath)
-      if (SKIP_EXISTING) {
-        console.log(`⏭️  Skipping existing file: ${filename}`)
+      if (SKIP_EXISTING) {        console.log(`⏭️  Skipping existing file: ${filename}`)
         return {
           family: fontFamily,
           weight,
@@ -149,7 +151,8 @@ async function downloadAndSaveFont(fontFace, fontFamily, fontDir) {
           format,
           filename,
           size: 0,
-          skipped: true
+          skipped: true,
+          language
         }
       } else {
         console.log(`  ⚠️  File exists, overwriting: ${filename}`)
@@ -162,8 +165,7 @@ async function downloadAndSaveFont(fontFace, fontFamily, fontDir) {
     const fontData = await downloadUrl(fontFace.url)
     
     await fs.writeFile(filepath, fontData)
-    
-    console.log(`✓ Saved: ${filename}`)
+      console.log(`✓ Saved: ${filename}`)
     
     return {
       family: fontFamily,
@@ -171,7 +173,8 @@ async function downloadAndSaveFont(fontFace, fontFamily, fontDir) {
       style,
       format,
       filename,
-      size: fontData.length
+      size: fontData.length,
+      language
     }
   } catch (error) {
     console.error(`✗ Error downloading ${fontFamily}:`, error.message)
@@ -197,7 +200,9 @@ function parseVariant(variant) {
  * @param {Object} font - Font object with family and variants
  */
 async function downloadFontVariants(font) {
-  const fontDir = await ensureFontDirectory(font.family)
+  // Get primary language from subsets (first subset is usually the primary language)
+  const primaryLanguage = font.subsets && font.subsets.length > 0 ? font.subsets[0] : 'latin'
+  const fontDir = await ensureFontDirectory(font.family, primaryLanguage)
   const downloaded = []
   
   // Parse variants from font object
@@ -214,10 +219,9 @@ async function downloadFontVariants(font) {
           const cssUrl = getCssDownloadURL(fontName, variant.weight, variant.italic)
           const cssText = (await downloadUrl(cssUrl)).toString('utf-8')
           const fontFaces = parseFontCSS(cssText)
-          
-          const results = []
+            const results = []
           for (const fontFace of fontFaces) {
-            const result = await downloadAndSaveFont(fontFace, font.family, fontDir)
+            const result = await downloadAndSaveFont(fontFace, font.family, fontDir, primaryLanguage)
             results.push(result)
           }
           return results
@@ -242,7 +246,7 @@ async function downloadFontVariants(font) {
 }
 
 /**
- * Generate metadata file for downloaded fonts
+ * Generate metadata file for downloaded fonts categorized by language
  * @param {Array} downloadedFonts - Array of downloaded font information
  */
 async function generateMetadata(downloadedFonts) {
@@ -253,23 +257,44 @@ async function generateMetadata(downloadedFonts) {
     generatedAt: new Date().toISOString(),
     totalFonts: actuallyDownloaded.length,
     skippedFonts: downloadedFonts.filter(font => font.skipped).length,
-    fonts: {}
+    languages: {}
   }
   
+  // Group fonts by language
   actuallyDownloaded.forEach(font => {
-    if (!metadata.fonts[font.family]) {
-      metadata.fonts[font.family] = {
-        variants: []
+    const language = font.language || 'latin'
+    
+    if (!metadata.languages[language]) {
+      metadata.languages[language] = {
+        totalFonts: 0,
+        fonts: {}
       }
     }
     
-    metadata.fonts[font.family].variants.push({
+    if (!metadata.languages[language].fonts[font.family]) {
+      metadata.languages[language].fonts[font.family] = {
+        variants: []
+      }
+      metadata.languages[language].totalFonts++
+    }
+    
+    metadata.languages[language].fonts[font.family].variants.push({
       weight: font.weight,
       style: font.style,
       format: font.format,
       filename: font.filename,
       size: font.size
     })
+  })
+  
+  // Add summary statistics
+  metadata.languageStats = {}
+  Object.keys(metadata.languages).forEach(language => {
+    metadata.languageStats[language] = {
+      fontFamilies: Object.keys(metadata.languages[language].fonts).length,
+      totalVariants: metadata.languages[language].fonts ? 
+        Object.values(metadata.languages[language].fonts).reduce((sum, font) => sum + font.variants.length, 0) : 0
+    }
   })
   
   await fs.writeFile(
@@ -295,11 +320,12 @@ async function main() {
   // Optional: Download only first 10 fonts for testing
   const fontsToDownload = GoogleFonts.slice(0, 10) // Remove this line to download all
   // const fontsToDownload = GoogleFonts // Use this to download all
-  
-  // Process each font
+    // Process each font
   for (let i = 0; i < fontsToDownload.length; i++) {
     const font = fontsToDownload[i]
+    const primaryLanguage = font.subsets && font.subsets.length > 0 ? font.subsets[0] : 'latin'
     console.log(`\n[${i + 1}/${fontsToDownload.length}] Processing: ${font.family}`)
+    console.log(`  Language: ${primaryLanguage} (${font.subsets ? font.subsets.join(', ') : 'latin'})`)
     console.log(`  Variants: ${font.variants.length} (${font.variants.join(', ')})`)
     
     try {

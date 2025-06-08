@@ -1,20 +1,5 @@
 // Latin and Latin-Extended fonts
-export default [
-  {
-    family: 'Open Sans',
-    category: 'sans-serif',
-    variants: ['0,300','1,300','0,400','1,400','0,600','1,600','0,700','1,700','0,800','1,800'],
-    subsets: ['latin', 'latin-ext'],
-  },
-  {
-    family: 'Roboto',
-    category: 'sans-serif',
-    variants: ['0,100','1,100','0,300','1,300','0,400','1,400','0,500','1,500','0,700','1,700','0,900','1,900'],
-    subsets: ['latin', 'latin-ext'],
-  }
-]
-
-export const dd = [
+export default = [
   {
     family: 'Open Sans',
     category: 'sans-serif',
