@@ -314,12 +314,11 @@ async function main() {
   
   // Create fonts directory
   await fs.mkdir(FONTS_DIR, { recursive: true })
+    const allDownloaded = []
   
-  const allDownloaded = []
-  
-  // Optional: Download only first 10 fonts for testing
-  const fontsToDownload = GoogleFonts.slice(0, 10) // Remove this line to download all
-  // const fontsToDownload = GoogleFonts // Use this to download all
+  // Download all fonts
+  const fontsToDownload = GoogleFonts
+  // const fontsToDownload = GoogleFonts.slice(0, 10) // Use this for testing with first 10 fonts only
     // Process each font
   for (let i = 0; i < fontsToDownload.length; i++) {
     const font = fontsToDownload[i]
