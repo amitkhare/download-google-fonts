@@ -1,5 +1,5 @@
 // Latin and Latin-Extended fonts
-export default = [
+export default [
   {
     family: 'Open Sans',
     category: 'sans-serif',
