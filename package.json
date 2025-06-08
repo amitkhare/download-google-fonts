@@ -1,0 +1,8 @@
+{
+  "name": "google-fonts-downloader",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "download": "node download-fonts.js"
+  }
+}
